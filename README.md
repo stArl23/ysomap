@@ -24,11 +24,10 @@ Ysomap is A helpful Java Deserialization exploit framework based on ysoserial
 - [x] 支持fastjson JdbcRowSetImpl、TemplatesImpl gadget，[原理](http://blog.0kami.cn/2020/04/13/talk-about-fastjson-deserialization/)
 - [x] 支持XStream EventHandler、ImageIO、LazyIterator、Groovy gadget，[原理](http://blog.0kami.cn/2020/04/18/talk-about-xstream-deserialization/)
 - [x] 修正RMIConnectWithUnicastRemoteObject，使得RMIRegistryExploit可攻击到<8u242版本
-
 ### TODO
 
 - [ ] 支持[tomcat下通用回显](https://xz.aliyun.com/t/7388)
-
+- [ ] 支持[内存shell的功能]
 ## 0x01 起因
 
 在实际分析ysoserial的利用链时，有时候会觉得框架写的太死，有以下几个缺点：

